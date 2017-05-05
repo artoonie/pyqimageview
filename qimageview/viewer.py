@@ -33,7 +33,7 @@ def sigint_handler(*args):
     sys.stderr.write('\r')
     QApplication.quit()
 
-from .widget import ImageView
+from widget import ImageView
 
 main_loop_type = 'qt'
 

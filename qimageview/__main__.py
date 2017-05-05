@@ -1,3 +1,3 @@
-import qimageview.view
+import qimageview.viewer
 
 qimageview.viewer.main()
