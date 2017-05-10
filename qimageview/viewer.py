@@ -21,11 +21,9 @@
 #SOFTWARE.
 
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QDesktopWidget, QLineEdit, QSlider
+from PyQt5.QtWidgets import QWidget, QApplication, QMainWindow, QDesktopWidget
 from PyQt5.QtGui import QImage
-from PyQt5.QtCore import QPoint, QPointF, QRect, QRectF, QSize, QSizeF, pyqtSignal
 from PyQt5.Qt import Qt
-from enum import Enum
 import os, sys
 
 def sigint_handler(*args):
@@ -40,11 +38,17 @@ main_loop_type = 'qt'
 class AppImageView(ImageView):
     def __init__(self, *args, **kwargs):
         ImageView.__init__(self, *args, **kwargs)
-        scene = self.scene()
         self.main_widget = None
+        self.last_pos = None
+        self.last_scene_pos = None
+
+    def updateLastPosWithEvent(self, event):
+        self.last_pos = event.pos()
+        self.last_scene_pos = self.mapToScene(event.pos())
 
     def mousePressEvent(self, event):
         ImageView.mousePressEvent(self, event)
+        self.updateLastPosWithEvent(event)
 
     def mouseMoveEvent(self, event):
         ImageView.mouseMoveEvent(self, event)
@@ -53,6 +57,7 @@ class AppImageView(ImageView):
         msg = 'ui: %d, %d  image: %d, %d'%(pos.y(), pos.x(), round(scene_pos.y()), round(scene_pos.x()))
         self.main_widget.statusBar().showMessage(msg)
 
+        self.updateLastPosWithEvent(event)
 
 class ImageViewerWindow(QMainWindow):
     def __init__(self, image, input_path):
@@ -107,20 +112,22 @@ class ImageViewerWindow(QMainWindow):
     def make_window_title(self):
         return os.path.basename(self.input_path)
 
+    def quit(self):
+        QApplication.quit()
+
     def keyPressEvent(self, event):
         key = event.key()
-        modifier = event.modifiers()
         global main_loop_type
         if key == Qt.Key_Escape:
             if main_loop_type == 'qt':
-                QApplication.quit()
+                self.quit()
             elif main_loop_type == 'ipython':
                 self.hide()
                 #import IPython
                 #IPython.get_ipython().ask_exit()
 
 def main():
-    import argparse, errno, sys
+    import argparse, sys
     parser = argparse.ArgumentParser(description='image viewer')
     parser.add_argument('inputs', type=str, nargs=1, help='path to the image')
     parser.add_argument('--interactive', '-i', action='store_true', help='launch in interactive shell')
